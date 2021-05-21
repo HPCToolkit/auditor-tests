@@ -1,0 +1,11 @@
+this directory contains a simple of the ARM LD_AUDIT problem that fails on many but not all ARM platforms.
+
+the problem that we have identified on ARM that causes trouble is that is in dl-trampoline.S, the _dl_runtime_profile trampoline used by LD_AUDIT
+does not save x8, which is used to point to memory where a returned structure will be written. (see document arm.pdf in parent directory)
+
+if the code for the runtime resolver in ld.so happens to overwrite x8, then the bug will be manifest. if the bug doesn't appear with this test, try
+the boost thread reproducer, which fails on every ARM system we have tried.
+  
+command to build and execute the reproducer:
+        make
+
