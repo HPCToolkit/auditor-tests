@@ -1,0 +1,56 @@
+This directory contains a copy of libmemkind.so from a cray system. 
+dlopening it with an auditor causes the loader to dump core on x86_64 
+with all known versions of glibc, e.g.  on RHEL7, RHEL8, and even a 
+closer to bleeding edge system with a Linux 5.10 kernel.
+
+The library wants to use BIND_NOW. That doesn't happen with LD_AUDIT.
+We believe that is what causes something to go wrong with a 
+relocation for TLS.
+
+John Mellor-Crummey and Jonathon Anderson (Rice University)
+
+---
+
+% readelf -r libmemkind.so
+...
+relocation section '.rela.plt' at offset 0x90f0 contains 1 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+00000024fb80  000000000024 R_X86_64_TLSDESC                     0
+
+
+
+Looking at the core dump with gdb:
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00002aaaaaab7674 in elf_machine_lazy_rel (skip_ifunc=0, reloc=0x2aaaab87a0f0, l_addr=46912510562304, map=<optimized out>)
+    at ../sysdeps/x86_64/dl-machine.h:528
+528                               + map->l_addr);
+(gdb) where
+#0  0x00002aaaaaab7674 in elf_machine_lazy_rel (skip_ifunc=0, reloc=0x2aaaab87a0f0, l_addr=46912510562304, map=<optimized out>)
+    at ../sysdeps/x86_64/dl-machine.h:528
+#1  elf_dynamic_do_Rela (skip_ifunc=0, lazy=<optimized out>, nrelative=<optimized out>, relsize=<optimized out>, reladdr=<optimized out>, map=0x602100)
+    at do-rel.h:71
+#2  _dl_relocate_object (scope=<optimized out>, reloc_mode=reloc_mode@entry=1, consider_profiling=<optimized out>, consider_profiling@entry=0)
+    at dl-reloc.c:259
+#3  0x00002aaaaaabf66c in dl_open_worker (a=a@entry=0x7fffffffc638) at dl-open.c:423
+#4  0x00002aaaaaaba7d4 in _dl_catch_error (objname=objname@entry=0x7fffffffc628, errstring=errstring@entry=0x7fffffffc630, 
+    mallocedp=mallocedp@entry=0x7fffffffc620, operate=operate@entry=0x2aaaaaabf160 <dl_open_worker>, args=args@entry=0x7fffffffc638) at dl-error.c:177
+#5  0x00002aaaaaabeb8b in _dl_open (file=0x400654 "./libmemkind.so", mode=-2147483647, caller_dlopen=<optimized out>, nsid=-2, argc=1, argv=0x7fffffffc978, 
+    env=0x7fffffffc988) at dl-open.c:649
+#6  0x00002aaaab29ffab in dlopen_doit (a=a@entry=0x7fffffffc840) at dlopen.c:66
+#7  0x00002aaaaaaba7d4 in _dl_catch_error (objname=0x2aaaab4a2110 <last_result+16>, errstring=0x2aaaab4a2118 <last_result+24>, 
+    mallocedp=0x2aaaab4a2108 <last_result+8>, operate=0x2aaaab29ff50 <dlopen_doit>, args=0x7fffffffc840) at dl-error.c:177
+#8  0x00002aaaab2a05ad in _dlerror_run (operate=operate@entry=0x2aaaab29ff50 <dlopen_doit>, args=args@entry=0x7fffffffc840) at dlerror.c:163
+#9  0x00002aaaab2a0041 in __dlopen (file=<optimized out>, mode=<optimized out>) at dlopen.c:87
+#10 0x00000000004005b4 in main (argc=1, argv=0x7fffffffc978) at main.c:5
+(gdb) list
+523           struct tlsdesc volatile * __attribute__((__unused__)) td =
+524             (struct tlsdesc volatile *)reloc_addr;
+525
+526           td->arg = (void*)reloc;
+527           td->entry = (void*)(D_PTR (map, l_info[ADDRIDX (DT_TLSDESC_PLT)])
+528                               + map->l_addr);
+529         }
+530       else if (__builtin_expect (r_type == R_X86_64_IRELATIVE, 0))
+531         {
+532           ElfW(Addr) value = map->l_addr + reloc->r_addend;
