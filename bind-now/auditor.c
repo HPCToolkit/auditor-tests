@@ -13,8 +13,7 @@ announce
   const char *symname
 )
 {
-  printf("AUDITOR: binding %s\n", symname);
-  if (strcmp(symname, "bind_test") == 0) printf("AUDITOR: binding %s\n", symname);
+  if (strcmp(symname, "bind_test") == 0) printf("AUDITOR : binding %s\n", symname);
 }
 
 
@@ -24,7 +23,6 @@ la_version
   unsigned int version
 )
 {
-  printf("AUDITOR: la_version %d\n", version);
   return version;
 }
 
