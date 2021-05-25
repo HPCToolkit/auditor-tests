@@ -13,7 +13,7 @@ announce
   const char *symname
 )
 {
-  if (strcmp(symname, "bind_test") == 0) printf("AUDITOR : binding %s\n", symname);
+  if (strcmp(symname, "bind_test") == 0) printf("AUDITOR SUCCESS: binding %s\n", symname);
 }
 
 
