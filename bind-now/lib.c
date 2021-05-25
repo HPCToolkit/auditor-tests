@@ -1,0 +1,1 @@
+void bind_test() {}
