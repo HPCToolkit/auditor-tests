@@ -27,6 +27,6 @@ This repository contains tests of various aspects of Glibc support for LD_AUDIT
 - la_symbind isn't called on RHEL8.3 with glibc-2.28 while it is called on 
   RHEL 7.9 with glibc-2.17. The bug is likely much more widespread.
 
-- Glibc Incorrectly saves registers when auditing on ARM, which is a
-  problem for HPE A64FX-based systems.
-
+- Glibc incorrectly saves registers when auditing on aarch64. 
+  Furthermore, there is no way to audit function calls using SVE registers which is currently a problem for 
+  HPE and Fujitsu A64FX-based systems and will be a problem for all future ARMv8 and ARMv9 processors which support SVE instructions.
