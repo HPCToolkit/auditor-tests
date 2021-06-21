@@ -21,15 +21,10 @@ and ARM A64FX.
 
 ### Tier 1 Issues
 
-- Auditing dlopen of a shared library that uses R_X86_64_TLSDESC fails.
-
-- Auditing dlmopen of a shared library fails.  
-
-- GLibc does not Invoke an auditor specified at link time prior to
-  glibc 2.32.
-
 - When using an auditor, there is an unacceptable performance degradation
   of over 50x for PLT calls to small procedures.
+
+- Auditing dlmopen of a shared library fails.  
 
 - la_symbind isn't called on RHEL8.3 with glibc-2.28 while it is called on 
   RHEL 7.9 with glibc-2.17. The bug is likely much more widespread.
@@ -38,11 +33,16 @@ and ARM A64FX.
   Furthermore, there is no way to audit function calls using SVE registers which is currently a problem for 
   HPE and Fujitsu A64FX-based systems and will be a problem for all future ARMv8 and ARMv9 processors which support SVE instructions.
 
+- A failing dl*open called by an auditor is uncatchable and fatal.
+
+- Auditing dlopen of a shared library that uses R_X86_64_TLSDESC fails.
+
+- GLibc does not invoke an auditor specified at link time prior to
+  glibc 2.32.
+
 ### Tier 2 Issues
 
 - Various Glibc functions cannot be called from an auditor.
-
-- A failing dl*open called by an auditor is uncatchable and fatal.
 
 - La_activity calls are missing or mis-ordered with respect to la_obj* calls.
 
