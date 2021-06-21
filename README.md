@@ -14,6 +14,13 @@ This repository contains tests of various aspects of Glibc support for LD_AUDIT
 
 ## Test Cases
 
+The test cases are divided up into two classes: Tier1 and Tier2. Tier1 issues are bugs that
+significantly impede the ability of the HPCToolkit performance tools 
+(https://github.com/hpctoolkit/hpctoolkit) to use LD_AUDIT on forthcoming exascale platforms 
+and ARM A64FX.
+
+### Tier 1 Issues
+
 - Auditing dlopen of a shared library that uses R_X86_64_TLSDESC fails.
 
 - Auditing dlmopen of a shared library fails.  
@@ -30,3 +37,15 @@ This repository contains tests of various aspects of Glibc support for LD_AUDIT
 - Glibc incorrectly saves registers when auditing on aarch64. 
   Furthermore, there is no way to audit function calls using SVE registers which is currently a problem for 
   HPE and Fujitsu A64FX-based systems and will be a problem for all future ARMv8 and ARMv9 processors which support SVE instructions.
+
+### Tier 2 Issues
+
+- Various Glibc functions cannot be called from an auditor.
+
+- A failing dl*open called by an auditor is uncatchable and fatal.
+
+- La_activity calls are missing or mis-ordered with respect to la_obj* calls.
+
+- A disabled auditor after an enabled auditor causes a SEGV.
+
+- La_objopen, link_map and dladdr disagree on key binaries.
