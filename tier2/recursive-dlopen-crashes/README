@@ -1,8 +1,8 @@
 # Related recursive dl*open calls can crash or cause inconsistent state
 
 Dlopen and dlmopen when called recursively (under very specific conditions) will crash uncatchably or return prior to
-the init constructors of the requested binaries (the difference is presumed to be caused by whether assertions were
-enabled during the build).
+the init constructors of the requested binaries (the difference between these two symptoms is presumed to be based on
+whether assertions were enabled during the build).
 
 The call to la_activity(CONSISTENT) within a dlopen occurs after all requested binaries have been mapped and relocated,
 but before their constructors have been called. In most cases the auditor is able to recursively call dl*open here and
@@ -14,24 +14,26 @@ the inner call to dl*open will crash uncatchably. In some cases (seen on RHEL 7.
 instead return almost immediately, without calling the binary's init constructors. In this latter case attempting
 to call into the library at this point is (as expected) a disaster for any sufficiently complex code.
 
-Note that this is a very narrow edge case. If libA depends on libB:
-  - If the outer dl*open requests libA and the inner libB, no crash occurs.
+Note that this is a very narrow edge case. Given two binaries, libA and libB, where libA directly depends on libB:
+  - If the outer dl*open call requests libA and the inner libB, no crash occurs.
   - If the outer requests libB and the inner libA, early Glibc (seen in 2.17) segfaults while later Glibc continues without issue.
   - If both the outer and inner calls request the same library (either libA or libB), this bug is triggered.
 
-This is a particularly serious issue for auditor-based tools, which need to interface with binaries within the application
-namespace. Tools often need to make calls to a library immediately when it is loaded, before any other code within the
-application or dependent libraries does. The auditor interface does not provide a callback directly after the init
-constructors for a binary have run, meaning the only way to make this sort of call is to manually "promote" the init
-constructors through a recursive call to dl*open. If a tool lazily does so only when a library of interest is loaded by
-the application, and this library is dynamically loaded by the application (as is common for plugin or GPU frameworks),
-this bug will be triggered with no robust workaround.
+This is a particularly serious issue for auditor-based tools that need to interface with binaries within the application
+namespace. Tools often need to make calls to a library immediately when it is loaded before application code starts to
+use the library. It is not safe to call into the library prior to its init constructors and the auditor interface does
+not provide a callback after init constructors have run, thus the only alternative is to "promote" the init constructors
+through a recursive call to dl*open during la_activity(CONSISTENT).
 
+This bug makes this approach unstable in practice. For instance, in HPCToolkit as part of initialization we call into
+libcuda.so to set up callbacks for monitoring CUDA operations. We call dlopen/dlsym to access the libcuda.so API without
+creating a direct dependency (to prevent loading libcuda.so for non-CUDA applications). Some application frameworks initate
+CUDA operations during their init constructors, to allow us to capture these operations we initialize when libcuda.so is
+loaded (if we have not already done so to capture other operations of interest, such as thread creation). If the *first*
+action by an application framework's init constructor is a dlopen(libcuda.so) (seen in LLVM's OpenMP runtime for OpenMP
+offloading support), we initialize during this call and recursively dlopen(libcuda.so), and subsequently crash due to this bug.
 
 ### Bug Reproducer
 git clone https://github.com/hpctoolkit/auditor-tests
 cd auditor-tests/tier2/recursive-dlopen-crashes
 make
-
-### Bug Status
-The problem appears in every tested version of Glibc since (and probably before) 2.17.
