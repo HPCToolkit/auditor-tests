@@ -37,23 +37,31 @@ unsigned int la_objclose(uintptr_t* cookie) {
   return 0;
 }
 
-int symbound = 0;
+static void checksym(struct link_map* refmap, struct link_map* defmap, const char* symname) {
+  int refstatus = -1, defstatus = -1;
+  if(strcmp(refmap->l_name, "./victim.so") == 0) refstatus = victim;
+  else if(strcmp(refmap->l_name, "./lib-base.so") == 0) refstatus = base;
+  else if(strcmp(refmap->l_name, "./lib-victim.so") == 0) refstatus = lib;
+  if(strcmp(defmap->l_name, "./victim.so") == 0) defstatus = victim;
+  else if(strcmp(defmap->l_name, "./lib-base.so") == 0) defstatus = base;
+  else if(strcmp(defmap->l_name, "./lib-victim.so") == 0) defstatus = lib;
+  if(refstatus == -1 && defstatus == -1) return;  // Not a binding we care about
+
+  if((refstatus & bit_open) == 0)
+    fprintf(stderr, "[audit] la_symbind binding %s from unknown binary %s, FAIL.\n", symname, refmap->l_name);
+  if((defstatus & bit_open) == 0)
+    fprintf(stderr, "[audit] la_symbind binding %s to unknown binary %s, FAIL.\n", symname, defmap->l_name);
+  if((refstatus & bit_open) != 0 && (defstatus & bit_open) != 0)
+    fprintf(stderr, "[audit] la_symbind binding %s from %s to %s, OK.\n", symname, refmap->l_name, defmap->l_name);
+}
 uintptr_t la_symbind64(Elf64_Sym* sym, unsigned int ndx, uintptr_t* refc,
                        uintptr_t* defc, unsigned int* flags, const char* name) {
-  struct link_map* refmap = (void*)*refc;
-  if(strcmp(refmap->l_name, "./victim.so") == 0) {
-    fprintf(stderr, "[audit] Unexpected call to la_symbind for %s from %s, FAIL.\n", name, refmap->l_name);
-    symbound = 1;
-  }
+  checksym((void*)*refc, (void*)*defc, name);
   return sym->st_value;
 }
 uintptr_t la_symbind32(Elf32_Sym* sym, unsigned int ndx, uintptr_t* refc,
                        uintptr_t* defc, unsigned int* flags, const char* name) {
-  struct link_map* refmap = (void*)*refc;
-  if(strcmp(refmap->l_name, "./victim.so") == 0) {
-    fprintf(stderr, "[audit] Unexpected call to la_symbind for %s -> %s, FAIL.\n", name, refmap->l_name);
-    symbound = 1;
-  }
+  checksym((void*)*refc, (void*)*defc, name);
   return sym->st_value;
 }
 
@@ -68,7 +76,6 @@ static void check(int status, const char* soname) {
 __attribute__((destructor))
 static void end() {
   fprintf(stderr, "\n");
-  if(!symbound) fprintf(stderr, "[audit] No la_symbind calls for ./victim.so, OK.\n");
   check(victim, "victim.so");
   check(base, "lib-base.so");
   check(lib, "lib-victim.so");
