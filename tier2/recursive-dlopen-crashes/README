@@ -30,8 +30,9 @@ libcuda.so to set up callbacks for monitoring CUDA operations. We call dlopen/dl
 creating a direct dependency (to prevent loading libcuda.so for non-CUDA applications). Some application frameworks initate
 CUDA operations during their init constructors, to allow us to capture these operations we initialize when libcuda.so is
 loaded (if we have not already done so to capture other operations of interest, such as thread creation). If the *first*
-action by an application framework's init constructor is a dlopen(libcuda.so) (seen in LLVM's OpenMP runtime for OpenMP
-offloading support), we initialize during this call and recursively dlopen(libcuda.so), and subsequently crash due to this bug.
+action by an application framework's init constructor is a dlopen(libcuda.so) (seen in IBM’s XL OpenMP runtime when used by
+Clang at LLNL for OpenMP offloading), we initialize during this call and recursively dlopen(libcuda.so), and subsequently
+crash due to this bug.
 
 ### Bug Reproducer
 git clone https://github.com/hpctoolkit/auditor-tests
