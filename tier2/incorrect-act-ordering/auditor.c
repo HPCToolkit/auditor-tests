@@ -16,8 +16,8 @@ unsigned int la_version(unsigned int v) {
 unsigned int state = 42;  // Something that isn't an LA_ACT_* constant
 struct link_map* base_head = NULL;
 void la_activity(uintptr_t* cookie, unsigned int flag) {
+  state = flag;
   if(((struct link_map*)*cookie) == base_head) {
-    state = flag;
     printf("  la_activity(LA_ACT_%s)\n", flag == LA_ACT_CONSISTENT ? "CONSISTENT" :
                                          flag == LA_ACT_ADD ? "ADD" : "DELETE");
   } else {
