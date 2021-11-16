@@ -14,8 +14,9 @@ unsigned int la_version(unsigned int v) {
 }
 
 unsigned int state = 42;  // Something that isn't an LA_ACT_* constant
+struct link_map* base_head = NULL;
 void la_activity(uintptr_t* cookie, unsigned int flag) {
-  if(((struct link_map*)*cookie)->l_name[0] == '\0') {
+  if(((struct link_map*)*cookie) == base_head) {
     state = flag;
     printf("  la_activity(LA_ACT_%s)\n", flag == LA_ACT_CONSISTENT ? "CONSISTENT" :
                                          flag == LA_ACT_ADD ? "ADD" : "DELETE");
@@ -26,6 +27,8 @@ void la_activity(uintptr_t* cookie, unsigned int flag) {
 }
 
 unsigned int la_objopen(struct link_map* m, Lmid_t lmid, uintptr_t* cookie) {
+  if(lmid == LM_ID_BASE)
+    for(base_head = m; base_head->l_prev != NULL; base_head = base_head->l_prev);
   printf("  la_objopen('%s')... ", name(m));
   if(state == LA_ACT_ADD)
     printf("OK.\n");

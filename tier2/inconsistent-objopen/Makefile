@@ -21,6 +21,6 @@ libauditor-vdso.so: auditor-vdso.c Makefile
 main-simple: main-simple.c Makefile
 	gcc -o $@ $<
 main-dlinfo-pie: main-dlinfo.c Makefile
-	gcc -o $@ $< -ldl -pie
+	gcc -o $@ $< -ldl -pie -fPIE
 main-dlinfo-nopie: main-dlinfo.c Makefile
 	gcc -o $@ $< -ldl -no-pie
