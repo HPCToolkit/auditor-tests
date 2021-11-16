@@ -1,9 +1,12 @@
 OBJS=main audit.so
 
 
-run: original auditor
+run: precheck original auditor
 
 build: $(OBJS)
+
+precheck:
+	!(ldd libs/* | grep 'not found')
 
 auditor: build
 	LD_AUDIT=./audit.so ./main
