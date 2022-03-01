@@ -40,6 +40,8 @@ and ARM A64FX.
 - GLibc does not invoke an auditor specified at link time prior to
   glibc 2.32.
 
+- Auditing calls preloaded allocation functions prior to full GLibc initialization.
+
 ### Tier 2 Issues
 
 - Various Glibc functions cannot be called from an auditor.

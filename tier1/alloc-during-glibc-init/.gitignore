@@ -1,0 +1,4 @@
+liballoc-*.so
+libearlymalloc.so
+auditor.so
+main
