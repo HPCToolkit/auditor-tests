@@ -2,7 +2,7 @@
 .SECONDARY:
 .NOTPARALLEL:
 
-causes_of_death := isspace gethostid dlopen dladdr
+causes_of_death := isspace gethostid dlopen dladdr dlinfo
 all: build test
 build: $(foreach c,$(causes_of_death),build-$(c))
 test: $(foreach c,$(causes_of_death),test-$(c))
@@ -18,8 +18,9 @@ DIEFLAG_isspace := -DDIE_FROM_ISSPACE
 DIEFLAG_gethostid := -DDIE_FROM_GETHOSTID
 DIEFLAG_dlopen := -DDIE_FROM_DLOPEN
 DIEFLAG_dladdr := -DDIE_FROM_DLADDR
+DIEFLAG_dlinfo := -DDIE_FROM_DLINFO
 libauditor-%.so: auditor.c Makefile
-	gcc -o $@ $(DIEFLAG_$*) $(COLOR_FLAG) -fPIC -shared $< -ldl
+	gcc -o $@ $(DIEFLAG_$*) $(COLOR_FLAG) -fPIC -shared $< -ldl -g
 
 main: main.c Makefile
 	gcc -o $@ $< -ldl

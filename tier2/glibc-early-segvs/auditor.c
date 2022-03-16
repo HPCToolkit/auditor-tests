@@ -28,6 +28,16 @@ static inline void might_die() {
   void* h = dlopen("./lib.so", RTLD_NOW);
   dlclose(h);
 }
+#elif DIE_FROM_DLINFO
+static struct link_map* module = NULL;
+static inline void might_die() {
+  if(module == NULL) {
+    printf("SKIP... ");
+    return;
+  }
+  Lmid_t x;
+  dlinfo(module, RTLD_DI_LMID, &x);
+}
 #elif DIE_FROM_DLADDR
 static inline void might_die() {
   Dl_info info;
@@ -61,6 +71,9 @@ unsigned int la_version(unsigned int v) {
 }
 
 unsigned int la_objopen(struct link_map* map, Lmid_t lmid, uintptr_t* cookie) {
+#ifdef DIE_FROM_DLINFO
+  module = map;
+#endif
   printf("  Attempting call during la_objopen of '%s'... ", map->l_name);
   attempt_call();
   *cookie = (uintptr_t)map;
