@@ -1,4 +1,4 @@
 auditor.so
-harness
 lib.so
+libdelayed.so
 main

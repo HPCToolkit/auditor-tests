@@ -1,27 +1,21 @@
-OBJS = \
-	lib.so \
-	auditor.so \
-	harness \
-	main
-
 OPTS=-O2 -g
 
+all: main auditor.so
+	@echo
+	@echo "Success requires OK (not FAIL):"
+	LD_AUDIT=./auditor.so ./main
+	@echo
+	LD_BIND_NOW=1 LD_AUDIT=./auditor.so ./main
 
-test: build run
+main: main.c lib.so libdelayed.so Makefile
+	gcc $(OPTS) -o main main.c -Wl,-rpath="`realpath .`" lib.so -Wl,-z,now -ldl
 
-build: $(OBJS)
+libdelayed.so: libdelayed.c lib.so Makefile
+	gcc $(OPTS) -fPIC -shared -o $@ $< -Wl,-rpath="`realpath .`" lib.so
 
-run:
-	./harness
-
-main: main.c lib.so
-	gcc $(OPTS) -o main main.c -Wl,-rpath=`pwd` lib.so
-
-harness: harness.c 
-	gcc $(OPTS) -o $@ $<
-
-%.so: %.c
+lib.so: lib.c Makefile
 	gcc $(OPTS) -fPIC -shared -o $@ $<
 
-clean:
-	/bin/rm -rf $(OBJS) 
+auditor.so: auditor.c Makefile
+	gcc $(OPTS) -fPIC -shared -o $@ $<
+
