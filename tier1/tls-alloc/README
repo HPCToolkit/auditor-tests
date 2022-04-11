@@ -1,0 +1,16 @@
+ld.so sets up TLS storage before loading auditors (so the auditors
+can use TLS). This early initialization causes two bugs:
+
+- When using an auditor, ld.so sets up static TLS for a process 
+before dependencies are added to the link-map. So, the calculation
+for the TCB/TLS block size doesn't count the TLS space needed by
+shared libraries to which the application is linked.  Later, access
+to thread-local variables from dependencies via IE TLS fails with
+'cannot allocate memory in static TLS block' when it shouldn't.
+
+- This initialization also happens before auditors are added to the
+link-map (or rather, the auditor namespaces don't even exist yet). If
+an auditor is compiled with IE TLS enabled, the auditor will fail to
+load with an identical error. (In this case the auditor is ignored and
+execution continues.)
+
