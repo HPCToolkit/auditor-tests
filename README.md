@@ -51,3 +51,5 @@ and ARM A64FX.
 - A disabled auditor after an enabled auditor causes a SEGV.
 
 - La_objopen, link_map and dladdr disagree on key binaries.
+
+- La_objopen missing for “fake” objects in alternative namespaces
