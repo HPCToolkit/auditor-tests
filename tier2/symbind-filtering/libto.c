@@ -1,0 +1,3 @@
+void symbol() {
+  // Do nothing
+}

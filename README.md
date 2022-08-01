@@ -53,3 +53,5 @@ and ARM A64FX.
 - La_objopen, link_map and dladdr disagree on key binaries.
 
 - La_objopen missing for “fake” objects in alternative namespaces
+
+- LA_FLG_BIND* filters do not apply uniformly
