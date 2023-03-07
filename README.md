@@ -55,3 +55,5 @@ and ARM A64FX.
 - La_objopen missing for “fake” objects in alternative namespaces
 
 - LA_FLG_BIND* filters do not apply uniformly
+
+- la_symbind is not called for data symbols outside of dlsym
